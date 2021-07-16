@@ -8,6 +8,6 @@ from trips.consumers import UberConsumer
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),
     'websocket': URLRouter([
-        path('taxi/', UberConsumer.as_asgi()),
+        path('uber/', UberConsumer.as_asgi()),
     ]),
 })
