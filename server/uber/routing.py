@@ -3,11 +3,14 @@ from django.urls import path
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 
+from uber.middleware import TokenAuthMiddlewareStack
 from trips.consumers import UberConsumer
 
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),
-    'websocket': URLRouter([
-        path('uber/', UberConsumer.as_asgi()),
-    ]),
+    'websocket': TokenAuthMiddlewareStack(
+        URLRouter([
+            path('uber/', UberConsumer.as_asgi()),
+        ])
+    ),
 })
