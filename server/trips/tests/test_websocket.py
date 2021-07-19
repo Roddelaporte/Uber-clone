@@ -15,6 +15,7 @@ TEST_CHANNEL_LAYERS = {
     },
 }
 
+
 @database_sync_to_async
 def create_user(username, password, group='rider'):
     user = get_user_model().objects.create_user(
@@ -26,6 +27,7 @@ def create_user(username, password, group='rider'):
     user.save()
     access = AccessToken.for_user(user)
     return user, access
+
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
@@ -110,4 +112,43 @@ class TestWebSocket:
         await channel_layer.group_send('drivers', message=message)
         response = await communicator.receive_json_from()
         assert response == message
+        await communicator.disconnect()
+    
+    async def test_driver_alerted_on_request(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+
+        # Listen to the 'drivers' group test channel.
+        channel_layer = get_channel_layer()
+        await channel_layer.group_add(
+            group='drivers',
+            channel='test_channel'
+        )
+
+        user, access = await create_user(
+            'test.user@example.com', 'pAssw0rd', 'rider'
+        )
+        communicator = WebsocketCommunicator(
+            application=application,
+            path=f'/uber/?token={access}'
+        )
+        connected, _ = await communicator.connect()
+
+        # Request a trip.
+        await communicator.send_json_to({
+            'type': 'create.trip',
+            'data': {
+                'pick_up_address': '123 Main Street',
+                'drop_off_address': '456 Piney Road',
+                'rider': user.id,
+            },
+        })
+
+        # Receive JSON message from server on test channel.
+        response = await channel_layer.receive('test_channel')
+        response_data = response.get('data')
+
+        assert response_data['id'] is not None
+        assert response_data['rider']['username'] == user.username
+        assert response_data['driver'] is None
+
         await communicator.disconnect()
