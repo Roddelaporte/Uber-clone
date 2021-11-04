@@ -23,9 +23,11 @@ function App () {
         'uber.auth', JSON.stringify(response.data)
       );
       setLoggedIn(true);
+      return { response, isError: false };
     }
     catch (error) {
       console.error(error);
+      return { response: error, isError: true };
     }
   };
 

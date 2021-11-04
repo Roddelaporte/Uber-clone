@@ -1,7 +1,7 @@
 import React from 'react';
 import { Formik } from 'formik';
 import {
-  Breadcrumb, Button, Card, Col, Form, Row
+  Alert, Breadcrumb, Button, Card, Col, Form, Row
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom'; 
 
@@ -9,12 +9,21 @@ function LogIn (props) {
 
   const onSubmit = async (values, actions) => {
     try {
-      await props.logIn(values.username, values.password);
+      const { response, isError } = await props.logIn(
+        values.username,
+        values.password
+      );
+      if (isError) {
+        const data = response.response.data;
+        for (const value in data) {
+          actions.setFieldError(value, data[value].join(' '));
+        }
+      }
     }
     catch (error) {
       console.error(error);
     }
-  };
+  }
 
   return (
     <Row>
@@ -33,8 +42,10 @@ function LogIn (props) {
             }}
             onSubmit={onSubmit}
             render={({
+              errors,
               handleChange,
               handleSubmit,
+              isSubmitting,
               values
             }) => (
               <Form noValidate onSubmit={handleSubmit}>
@@ -55,7 +66,19 @@ function LogIn (props) {
                     value={values.password}
                   />
                 </Form.Group>
-                <Button block type='submit' variant='primary'>Log in</Button>
+                {
+                  '__all__' in errors &&
+                  <Alert variant='danger'>
+                    { errors['__all__'] }
+                  </Alert>
+                }
+                <Button
+                    block
+                    disabled={isSubmitting}
+                    type='submit'
+                    variant='primary'
+                  >Log in
+                </Button>
               </Form>
             )}
             />
