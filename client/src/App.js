@@ -31,6 +31,11 @@ function App () {
     }
   };
 
+  const logOut = () => {
+    window.localStorage.removeItem('uber.auth');
+    setLoggedIn(false);
+  };
+
   return (
     <>
       <Navbar bg='light' expand='lg' variant='light'>
@@ -40,10 +45,11 @@ function App () {
         <Navbar.Toggle />
         <Navbar.Collapse>
           {
-            isLoggedIn &&
-            <Form inline className='ml-auto'>
-              <Button type='button'>Log out</Button>
-            </Form>
+            isLoggedIn && (
+              <Form inline className='ml-auto'>
+                <Button type='button' onClick={() => logOut()}>Log out</Button>
+              </Form>
+            )
           }
         </Navbar.Collapse>
       </Navbar>
